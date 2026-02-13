@@ -62,6 +62,10 @@ app = FastAPI(
     dependencies=[Depends(verify_platform_key)] if settings.ENV == "production" else []
 )
 
+@app.get("/")
+def root():
+    return {"service": "FinSight API", "status": "online"}
+
 
 # -------------------------------------------------------------------
 # CORS PROFESIONAL POR ENTORNO
