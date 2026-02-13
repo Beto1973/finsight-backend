@@ -14,6 +14,9 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
+from core.logging_config import setup_logging
+from core.health import system_health
+
 import logging
 
 
@@ -21,11 +24,7 @@ import logging
 # LOGGING PROFESIONAL
 # -------------------------------------------------------------------
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
-)
-
+setup_logging()
 logger = logging.getLogger("finsight")
 
 
@@ -62,9 +61,19 @@ app = FastAPI(
     dependencies=[Depends(verify_platform_key)] if settings.ENV == "production" else []
 )
 
+
+# -------------------------------------------------------------------
+# ROOT + HEALTH
+# -------------------------------------------------------------------
+
 @app.get("/")
-def root():
+async def root():
     return {"service": "FinSight API", "status": "online"}
+
+
+@app.get("/health")
+async def health():
+    return await system_health()
 
 
 # -------------------------------------------------------------------
@@ -87,7 +96,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -115,4 +124,5 @@ async def rate_limit_handler(request, exc):
 app.include_router(analyze_router, prefix="/analyze", tags=["Analysis"])
 app.include_router(portfolio_router, prefix="/portfolio", tags=["Portfolio"])
 app.include_router(intelligence_router, prefix="/intelligence", tags=["Intelligence"])
+
 
